@@ -13,10 +13,33 @@ export const sampleConfig: MunicipalityConfig = {
   payloadMap: { root: 'declaracion', fields: [] },
   steps: [
     {
-      id: 'identificacion',
-      label: 'Identificación del contribuyente',
+      id: 'datosMunicipio',
+      label: 'Información del municipio',
       order: 1,
       visibleWhen: null,
+      fields: [
+        {
+          id: 'datosMunicipioInfo',
+          label: 'Datos del municipio',
+          type: 'display',
+          bindings: [
+            { label: 'Municipio',    path: 'municipality.municipalityName' },
+            { label: 'Departamento', path: 'municipality.departmentName'   },
+          ],
+          validations: [],
+        },
+      ],
+    },
+    {
+      id: 'identificacion',
+      label: 'Identificación del contribuyente',
+      order: 2,
+      visibleWhen: null,
+      // Lógica condicional: tipoDocumento === '2' (NIT) bifurca el formulario
+      // entre persona jurídica (razón social + DV) y persona natural (nombres
+      // y apellidos). El número se modela como dos campos sibling con visibilidad
+      // mutuamente excluyente para reflejar que son valores semánticamente distintos
+      // (CC/CE numérico vs NIT con DV).
       fields: [
         {
           id: 'tipoDocumento', label: 'Tipo de documento', type: 'select',
@@ -25,29 +48,110 @@ export const sampleConfig: MunicipalityConfig = {
             { type: 'required', message: 'Tipo de documento requerido' },
           ],
         },
+
+        // ── Rama: NIT (id 2) ────────────────────────────────────────────────
+        {
+          id: 'nit', label: 'NIT', type: 'text',
+          visibleWhen: {
+            operator: 'eq',
+            left: { field: 'tipoDocumento' },
+            right: { literal: '2' },
+          },
+          validations: [
+            { type: 'required', message: 'NIT requerido' },
+            { type: 'pattern', value: { literal: '^\\d+$' }, message: 'Solo dígitos' },
+          ],
+        },
+        {
+          id: 'dv', label: 'DV', type: 'text',
+          visibleWhen: {
+            operator: 'eq',
+            left: { field: 'tipoDocumento' },
+            right: { literal: '2' },
+          },
+          validations: [
+            { type: 'required', message: 'DV requerido' },
+            { type: 'pattern', value: { literal: '^\\d$' }, message: 'Un solo dígito' },
+          ],
+        },
+        {
+          id: 'razonSocial', label: 'Razón social', type: 'text',
+          visibleWhen: {
+            operator: 'eq',
+            left: { field: 'tipoDocumento' },
+            right: { literal: '2' },
+          },
+          validations: [
+            { type: 'required', message: 'Razón social requerida' },
+          ],
+        },
+
+        // ── Rama: persona natural (cualquier tipo distinto a 2) ─────────────
         {
           id: 'numeroDocumento', label: 'Número de documento', type: 'text',
+          visibleWhen: {
+            operator: 'neq',
+            left: { field: 'tipoDocumento' },
+            right: { literal: '2' },
+          },
           validations: [
             { type: 'required', message: 'Número de documento requerido' },
             { type: 'minLength', value: { literal: 5 }, message: 'Mínimo 5 caracteres' },
           ],
         },
         {
-          id: 'tipoPersona', label: 'Tipo de persona', type: 'select',
-          source: { catalog: 'personTypes' },
+          id: 'primerNombre', label: 'Primer nombre', type: 'text',
+          visibleWhen: {
+            operator: 'neq',
+            left: { field: 'tipoDocumento' },
+            right: { literal: '2' },
+          },
           validations: [
-            { type: 'required', message: 'Tipo de persona requerido' },
+            { type: 'required', message: 'Primer nombre requerido' },
+          ],
+        },
+        {
+          id: 'segundoNombre', label: 'Segundo nombre', type: 'text',
+          visibleWhen: {
+            operator: 'neq',
+            left: { field: 'tipoDocumento' },
+            right: { literal: '2' },
+          },
+          validations: [],
+        },
+        {
+          id: 'primerApellido', label: 'Primer apellido', type: 'text',
+          visibleWhen: {
+            operator: 'neq',
+            left: { field: 'tipoDocumento' },
+            right: { literal: '2' },
+          },
+          validations: [
+            { type: 'required', message: 'Primer apellido requerido' },
+          ],
+        },
+        {
+          id: 'segundoApellido', label: 'Segundo apellido', type: 'text',
+          visibleWhen: {
+            operator: 'neq',
+            left: { field: 'tipoDocumento' },
+            right: { literal: '2' },
+          },
+          validations: [],
+        },
+
+        // ── Comunes: siempre visibles ───────────────────────────────────────
+        {
+          id: 'telefono', label: 'Teléfono', type: 'text',
+          validations: [
+            { type: 'required', message: 'Teléfono requerido' },
+            { type: 'pattern', value: { literal: '^\\d{7,15}$' }, message: 'Solo dígitos (7-15)' },
           ],
         },
         {
           id: 'correoElectronico', label: 'Correo electrónico', type: 'text',
-          // Visible solo para personas naturales — ejemplo de visibleWhen
-          visibleWhen: {
-            operator: 'eq',
-            left: { field: 'tipoPersona' },
-            right: { literal: 'natural' },
-          },
           validations: [
+            { type: 'required', message: 'Correo requerido' },
             {
               type: 'pattern',
               value: { literal: '^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$' },
@@ -60,7 +164,7 @@ export const sampleConfig: MunicipalityConfig = {
     {
       id: 'declaracion',
       label: 'Datos de la declaración',
-      order: 2,
+      order: 3,
       visibleWhen: null,
       fields: [
         {
@@ -80,7 +184,7 @@ export const sampleConfig: MunicipalityConfig = {
     {
       id: 'totales',
       label: 'Totales',
-      order: 3,
+      order: 4,
       visibleWhen: null,
       fields: [
         {
