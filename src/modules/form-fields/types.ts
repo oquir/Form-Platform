@@ -14,6 +14,8 @@ export interface FieldComponentProps {
   disabled: boolean
   options?: SelectOption[]
   error?: string
+  // Solo lo consume DisplayField; el resto lo ignora.
+  displayItems?: Array<{ label: string; value: string }>
 }
 
 export type FieldComponent = ComponentType<FieldComponentProps>

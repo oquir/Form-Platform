@@ -2,6 +2,7 @@ import type { StepConfig, FieldConfig } from '@/types/config.types'
 import type { ResolvedStep, ResolvedField, RuleEvalResult } from '@/types/engine.types'
 import type { HydratedData } from '@/types/form.types'
 import { resolveOptions } from './resolveOptions'
+import { resolveBindings } from './resolveBindings'
 
 // Determina visibilidad de un campo. En Fase 2 el RuleEngine aún no evalúa
 // `visibleWhen`, así que se respeta lo que ya esté en el mapa o se asume
@@ -26,6 +27,7 @@ function resolveField(
     isDisabled: false,
     options: resolveOptions(field, hydrated),
     computedValue: field.type === 'calculated' ? rules.computed.get(field.id) : undefined,
+    displayItems: field.type === 'display' ? resolveBindings(field.bindings, hydrated) : undefined,
   }
 }
 

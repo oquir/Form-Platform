@@ -15,9 +15,9 @@ export function FieldRenderer({ field }: FieldRendererProps) {
 
   if (!field.isVisible) return null
 
-  // Los campos calculated no son estado de formulario; su valor se deriva
-  // del Rule Engine y se inyecta vía ResolvedField.computedValue.
-  if (field.type === 'calculated') {
+  // calculated y display no son estado de formulario: se renderizan con
+  // los valores ya resueltos por los engines (computedValue / displayItems).
+  if (field.type === 'calculated' || field.type === 'display') {
     return (
       <Component
         id={field.id}
@@ -29,6 +29,7 @@ export function FieldRenderer({ field }: FieldRendererProps) {
         disabled
         options={field.options}
         error={field.error}
+        displayItems={field.displayItems}
       />
     )
   }

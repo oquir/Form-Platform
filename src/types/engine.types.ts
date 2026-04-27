@@ -16,6 +16,9 @@ export interface ResolvedField {
   // Solo presente para fields tipo 'calculated' — proviene de rules.computed.
   // No vive en RHF: se trata como valor derivado, no como estado de form.
   computedValue?: unknown
+  // Solo presente para fields tipo 'display' — pares label/valor ya
+  // resueltos contra HydratedData por el FormEngine.
+  displayItems?: Array<{ label: string; value: string }>
 }
 
 export interface ResolvedStep {

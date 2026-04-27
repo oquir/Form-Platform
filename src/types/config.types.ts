@@ -71,6 +71,15 @@ export interface FormulaNode {
 export type FieldType =
   | 'text' | 'number' | 'select' | 'date'
   | 'calculated' | 'hidden' | 'activityTable'
+  | 'display'
+
+// Binding declarativo de display fields: cada entry pinta un par
+// label/valor donde `path` es dot-notation contra HydratedData
+// (ej. 'municipality.municipalityName').
+export interface DisplayBinding {
+  label: string
+  path: string
+}
 
 export interface CatalogRef {
   catalog: string
@@ -116,6 +125,8 @@ export interface FieldConfig {
   columns?: ColumnConfig[]
   rowValidations?: RowValidationRule[]
   rowCalculations?: RowCalculationConfig[]
+  // Solo aplicable a fields tipo 'display'.
+  bindings?: DisplayBinding[]
 }
 
 // ─── Step ─────────────────────────────────────────────────────────────────────
