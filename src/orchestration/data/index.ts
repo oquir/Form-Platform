@@ -1,2 +1,2 @@
-// Phase 3 — DataOrchestrator + HookExecutor + PayloadMapper
-export {}
+export { useDataOrchestrator } from './useDataOrchestrator'
+export type { DataOrchestratorResult } from './useDataOrchestrator'

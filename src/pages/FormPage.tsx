@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
-import { useParams, Navigate } from 'react-router-dom'
+import { useSearchParams, Navigate } from 'react-router-dom'
 import { useAppStore, selectMunicipalityId } from '@/store/app.store'
 import { FormRenderer } from '@/modules/form-engine-ui'
-import { sampleConfig, sampleHydratedData } from '@/dev/sample.config'
+import { sampleConfig } from '@/dev/sample.config'
 import {
   DeclarationBootstrapModal,
   ResetSessionButton,
@@ -13,12 +13,19 @@ import {
   selectIsSessionReady,
   useSessionRuleContext,
 } from '@/orchestration/session'
+import { useDataOrchestrator } from '@/orchestration/data'
 import type { DeclarationSession } from '@/types/session.types'
+import type { HydratedData } from '@/types/form.types'
 
-const MUNICIPALITY_ID_REGEX = /^\d{5}$/
+// Código del municipio: numérico, longitud razonable (NIT-style 9-10 dígitos
+// o variantes). El backend valida el código real; aquí solo descartamos
+// basura para no gastar un request y mandar a /not-found rápidamente.
+const MUNICIPALITY_ID_REGEX = /^\d{6,15}$/
 
 export function FormPage() {
-  const { municipalityId } = useParams<{ municipalityId: string }>()
+  const [searchParams] = useSearchParams()
+  const municipalityId = searchParams.get('c')
+
   const setMunicipalityId  = useAppStore((s) => s.setMunicipalityId)
   const setAppReady        = useAppStore((s) => s.setAppReady)
   const activeMunicipality = useAppStore(selectMunicipalityId)
@@ -33,25 +40,44 @@ export function FormPage() {
     setAppReady(true)
   }, [municipalityId, isValidId, setMunicipalityId, setAppReady])
 
-  if (!isValidId) {
+  if (!isValidId || !municipalityId) {
     return <Navigate to="/not-found" replace />
   }
+
+  // Orchestrator se dispara desde el mount: corre en paralelo con el modal
+  // de bootstrap (los catálogos del modal son independientes), de forma
+  // que cuando el usuario confirma la sesión los datos del municipio ya
+  // suelen estar cacheados.
+  return <FormPageInner municipalityId={municipalityId} activeMunicipality={activeMunicipality} isSessionReady={isSessionReady} session={session} />
+}
+
+interface FormPageInnerProps {
+  municipalityId: string
+  activeMunicipality: string | null
+  isSessionReady: boolean
+  session: DeclarationSession | null
+}
+
+function FormPageInner({
+  municipalityId, activeMunicipality, isSessionReady, session,
+}: FormPageInnerProps) {
+  const { isLoading, error, data } = useDataOrchestrator(municipalityId)
+
+  const headerTitle = data?.municipality?.municipalityName ?? sampleConfig.municipalityName
 
   return (
     <main className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-3xl px-4 py-6">
         <header className="mb-4 flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">{sampleConfig.municipalityName}</h1>
-            <p className="text-xs text-gray-500">Municipio activo: {activeMunicipality}</p>
+            <h1 className="text-xl font-semibold text-gray-900">{headerTitle}</h1>
+            <p className="text-xs text-gray-500">Código de municipio: {activeMunicipality}</p>
           </div>
-          {isSessionReady && session && (
-            <SessionSummary session={session} />
-          )}
+          {isSessionReady && session && <SessionSummary session={session} />}
         </header>
 
         {isSessionReady && session && (
-          <SessionAwareFormRenderer session={session} />
+          <FormBody session={session} isLoading={isLoading} error={error} data={data} />
         )}
       </div>
 
@@ -60,7 +86,6 @@ export function FormPage() {
   )
 }
 
-// Resumen compacto + reset. Vive aquí porque es UX de página, no del módulo bootstrap.
 function SessionSummary({ session }: { session: DeclarationSession }) {
   return (
     <div className="flex flex-col items-end gap-1 text-right">
@@ -72,15 +97,40 @@ function SessionSummary({ session }: { session: DeclarationSession }) {
   )
 }
 
-// Aísla la derivación session → ruleContext. FormPage no se ensucia con
-// el shape del rule-engine; cualquier futuro consumer del FormRenderer
-// con sesión activa puede reusar este patrón.
-function SessionAwareFormRenderer({ session }: { session: DeclarationSession }) {
+// Decisión de qué pintar según el estado del orchestrator. Evita
+// acoplar SessionAwareFormRenderer al ciclo de fetching.
+function FormBody({
+  session, isLoading, error, data,
+}: {
+  session: DeclarationSession
+  isLoading: boolean
+  error: Error | null
+  data: HydratedData | null
+}) {
+  if (isLoading) {
+    return <p className="text-sm text-gray-500">Cargando datos del municipio...</p>
+  }
+  if (error || !data) {
+    return (
+      <p className="text-sm text-red-600">
+        No se pudieron cargar los datos del municipio.
+      </p>
+    )
+  }
+  return <SessionAwareFormRenderer session={session} hydrated={data} />
+}
+
+function SessionAwareFormRenderer({
+  session, hydrated,
+}: {
+  session: DeclarationSession
+  hydrated: HydratedData
+}) {
   const ruleContext = useSessionRuleContext(session)
   return (
     <FormRenderer
       config={sampleConfig}
-      hydrated={sampleHydratedData}
+      hydrated={hydrated}
       ruleContext={ruleContext}
     />
   )

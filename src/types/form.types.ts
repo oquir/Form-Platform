@@ -38,9 +38,18 @@ export interface GlobalCatalogs {
 
 export interface MunicipalityDataCache {
   municipalityId: string
-  fechaMaximaDeclaracion: string
-  fechaMaximaConDescuento: string
-  economicActivities: Array<{
+  municipalityName: string
+  departmentName: string
+  // Color de marca por municipio (proviene de ConsultarMunicipio).
+  // Útil para futuro theming dinámico — por ahora solo se almacena.
+  siteColor?: string
+  // Indica si el municipio expone Registro de Información Tributaria.
+  // Las reglas declarativas pueden referenciarlo como `municipality.tieneRIT`.
+  tieneRIT?: boolean
+  // Los siguientes los proveerán endpoints adicionales cuando se integren.
+  fechaMaximaDeclaracion?: string
+  fechaMaximaConDescuento?: string
+  economicActivities?: Array<{
     codigoActividad: string
     descripcion: string
     tarifaXMil: number
