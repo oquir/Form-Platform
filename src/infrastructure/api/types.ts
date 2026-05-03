@@ -45,6 +45,18 @@ export interface Municipio {
   departamento: string;
   colorSitio: string;
   tieneRIT: boolean;
+  porcentajeSobretasaBomberil?: number;
+}
+
+export interface ClasificacionMunicipio {
+  idClasificacionMunicipio: number;
+  tipoClasificacion: string | null;
+}
+
+export interface ActividadEconomica {
+  idActividad: number;
+  codigoCIIU: string;
+  descripcion: string;
 }
 
 export interface DeclaracionIca {

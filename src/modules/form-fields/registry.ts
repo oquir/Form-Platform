@@ -3,10 +3,11 @@ import type { FieldComponent } from './types'
 import { TextField } from './TextField'
 import { NumberField } from './NumberField'
 import { SelectField } from './SelectField'
+import { RadioField } from './RadioField'
 import { DateField } from './DateField'
 import { HiddenField } from './HiddenField'
 import { CalculatedField } from './CalculatedField'
-import { ActivityTablePlaceholder } from './ActivityTablePlaceholder'
+import { ActivityTable } from './ActivityTable'
 import { DisplayField } from './DisplayField'
 
 // Registry de tipos de campo. Open/Closed: agregar un FieldType nuevo
@@ -15,10 +16,11 @@ const registry: Record<FieldType, FieldComponent> = {
   text: TextField,
   number: NumberField,
   select: SelectField,
+  radio: RadioField,
   date: DateField,
   hidden: HiddenField,
   calculated: CalculatedField,
-  activityTable: ActivityTablePlaceholder,
+  activityTable: ActivityTable,
   display: DisplayField,
 }
 

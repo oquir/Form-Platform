@@ -1,9 +1,15 @@
 import type { FieldComponent } from './types'
 
-// Stub Fase 2 — el cálculo lo provee el RuleEngine en Fase 3.
-// Por ahora es un display read-only del valor que llegue por props.
-export const CalculatedField: FieldComponent = ({ id, label, value }) => {
-  const display = value == null ? '—' : String(value)
+function formatCOP(n: number): string {
+  return new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(n)
+}
+
+export const CalculatedField: FieldComponent = ({ id, label, value, displayFormat }) => {
+  const display = value == null
+    ? '—'
+    : displayFormat === 'thousands' && typeof value === 'number'
+      ? formatCOP(value)
+      : String(value)
 
   return (
     <div className="flex flex-col gap-1">

@@ -8,6 +8,7 @@ import type {
   PeriodoAnual,
   TipoDeclaracion,
   TipoDocumento,
+  TipoPersona,
 } from '@/infrastructure/api/types'
 import { STALE_TIMES } from '@/lib/query-client'
 import {
@@ -16,6 +17,7 @@ import {
   periodosAnualesResponseSchema,
   tiposDeclaracionResponseSchema,
   tiposDocumentoResponseSchema,
+  tiposPersonaResponseSchema,
 } from '@/infrastructure/schemas/api-responses.schemas'
 
 // Query keys centralizadas — un solo lugar para invalidaciones futuras.
@@ -25,6 +27,7 @@ export const GLOBAL_QUERY_KEYS = {
   departamentos:      ['catalogs', 'departamentos']      as const,
   ciudades:           ['catalogs', 'ciudades']           as const,
   tiposDocumento:     ['catalogs', 'tiposDocumento']     as const,
+  tiposPersona:       ['catalogs', 'tiposPersona']       as const,
 }
 
 export function usePeriodosAnualesQuery(): UseQueryResult<PeriodoAnual[]> {
@@ -32,7 +35,7 @@ export function usePeriodosAnualesQuery(): UseQueryResult<PeriodoAnual[]> {
     queryKey: GLOBAL_QUERY_KEYS.periodosAnuales,
     queryFn: async () => {
       // ApiGateway desempaca el envelope; aquí solo validamos `result`.
-      const result = await apiGateway.get<unknown>(ENDPOINTS.LIST_ANNUAL_PERIODS)
+      const result = await apiGateway.get<PeriodoAnual[]>(ENDPOINTS.LIST_ANNUAL_PERIODS)
       return periodosAnualesResponseSchema.parse(result)
     },
     staleTime: STALE_TIMES.GLOBAL_CATALOGS,
@@ -43,7 +46,7 @@ export function useTiposDeclaracionQuery(): UseQueryResult<TipoDeclaracion[]> {
   return useQuery({
     queryKey: GLOBAL_QUERY_KEYS.tiposDeclaracion,
     queryFn: async () => {
-      const result = await apiGateway.get<unknown>(ENDPOINTS.LIST_DECLARATION_TYPES)
+      const result = await apiGateway.get<TipoDeclaracion[]>(ENDPOINTS.LIST_DECLARATION_TYPES)
       return tiposDeclaracionResponseSchema.parse(result)
     },
     staleTime: STALE_TIMES.GLOBAL_CATALOGS,
@@ -54,7 +57,7 @@ export function useDepartamentosQuery(): UseQueryResult<Departamento[]> {
   return useQuery({
     queryKey: GLOBAL_QUERY_KEYS.departamentos,
     queryFn: async () => {
-      const result = await apiGateway.get<unknown>(ENDPOINTS.LIST_DEPARTMENTS)
+      const result = await apiGateway.get<Departamento[]>(ENDPOINTS.LIST_DEPARTMENTS)
       return departamentosResponseSchema.parse(result)
     },
     staleTime: STALE_TIMES.GLOBAL_CATALOGS,
@@ -65,7 +68,7 @@ export function useCiudadesQuery(): UseQueryResult<Ciudad[]> {
   return useQuery({
     queryKey: GLOBAL_QUERY_KEYS.ciudades,
     queryFn: async () => {
-      const result = await apiGateway.get<unknown>(ENDPOINTS.LIST_CITIES)
+      const result = await apiGateway.get<Ciudad[]>(ENDPOINTS.LIST_CITIES)
       return ciudadesResponseSchema.parse(result)
     },
     staleTime: STALE_TIMES.GLOBAL_CATALOGS,
@@ -76,8 +79,19 @@ export function useTiposDocumentoQuery(): UseQueryResult<TipoDocumento[]> {
   return useQuery({
     queryKey: GLOBAL_QUERY_KEYS.tiposDocumento,
     queryFn: async () => {
-      const result = await apiGateway.get<unknown>(ENDPOINTS.LIST_DOCUMENT_TYPES)
+      const result = await apiGateway.get<TipoDocumento[]>(ENDPOINTS.LIST_DOCUMENT_TYPES)
       return tiposDocumentoResponseSchema.parse(result)
+    },
+    staleTime: STALE_TIMES.GLOBAL_CATALOGS,
+  })
+}
+
+export function useTiposPersonaQuery(): UseQueryResult<TipoPersona[]> {
+  return useQuery({
+    queryKey: GLOBAL_QUERY_KEYS.tiposPersona,
+    queryFn: async () => {
+      const result = await apiGateway.get<TipoPersona[]>(ENDPOINTS.LIST_PERSON_TYPES)
+      return tiposPersonaResponseSchema.parse(result)
     },
     staleTime: STALE_TIMES.GLOBAL_CATALOGS,
   })

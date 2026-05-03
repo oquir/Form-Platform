@@ -30,11 +30,25 @@ export const tipoDocumentoSchema = z.object({
   tipoDocumento: z.string(),
 })
 
+export const tipoPersonaSchema = z.object({
+  idTipoPersona: z.number(),
+  tipoPersona: z.string(),
+})
+
 export const municipioSchema = z.object({
   municipio: z.string(),
   departamento: z.string(),
   colorSitio: z.string(),
   tieneRIT: z.boolean(),
+  porcentajeSobretasaBomberil: z.number().optional(),
+})
+
+export const clasificacionMunicipioSchema = z.object({
+  idClasificacionMunicipio: z.number(),
+  // Nombre real del campo en backend (no `clasificacionMunicipio`).
+  // Puede llegar `null` para clasificaciones sin etiqueta; el orchestrator
+  // las filtra antes de pintar opciones.
+  tipoClasificacion: z.string().nullable(),
 })
 
 export const contribuyenteSchema = z.object({
@@ -147,9 +161,20 @@ export const declaracionIcaSchema = z.object({
   responsableLegal: responsableLegalSchema,
 })
 
-export const periodosAnualesResponseSchema = z.array(periodoAnualSchema)
-export const tiposDeclaracionResponseSchema = z.array(tipoDeclaracionSchema)
-export const departamentosResponseSchema    = z.array(departamentoSchema)
-export const ciudadesResponseSchema         = z.array(ciudadSchema)
-export const tiposDocumentoResponseSchema   = z.array(tipoDocumentoSchema)
-export const declaracionIcaResponseSchema   = declaracionIcaSchema
+export const actividadEconomicaSchema = z.object({
+  idActividad: z.number(),
+  codigoCIIU:  z.string(),
+  descripcion: z.string(),
+})
+
+export const actividadesEconomicasResponseSchema = z.array(actividadEconomicaSchema)
+
+export const periodosAnualesResponseSchema        = z.array(periodoAnualSchema)
+export const tiposDeclaracionResponseSchema       = z.array(tipoDeclaracionSchema)
+export const departamentosResponseSchema          = z.array(departamentoSchema)
+export const ciudadesResponseSchema               = z.array(ciudadSchema)
+export const tiposDocumentoResponseSchema         = z.array(tipoDocumentoSchema)
+export const tiposPersonaResponseSchema           = z.array(tipoPersonaSchema)
+export const clasificacionMunicipioResponseSchema = z.array(clasificacionMunicipioSchema)
+export const declaracionIcaResponseSchema         = declaracionIcaSchema
+
