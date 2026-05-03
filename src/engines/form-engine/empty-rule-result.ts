@@ -7,5 +7,7 @@ export function emptyRuleResult(): RuleEvalResult {
     visibility: new Map(),
     computed: new Map(),
     stepVisibility: new Map(),
+    colSpan: new Map(),
+    disabled: new Map(),
   }
 }

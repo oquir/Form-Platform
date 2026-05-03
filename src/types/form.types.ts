@@ -34,6 +34,11 @@ export interface GlobalCatalogs {
   departments: SelectOption[]
   cities: SelectOption[]
   documentTypes: SelectOption[]
+  // Dependiente del municipio activo. Vive en el mismo bag que los catálogos
+  // globales para no acoplar `resolveOptions` a múltiples fuentes; la
+  // hidratación se hace en el Data Orchestrator.
+  municipalityClassifications: SelectOption[]
+  yesNo: SelectOption[]
 }
 
 export interface MunicipalityDataCache {
@@ -49,9 +54,15 @@ export interface MunicipalityDataCache {
   // Los siguientes los proveerán endpoints adicionales cuando se integren.
   fechaMaximaDeclaracion?: string
   fechaMaximaConDescuento?: string
+  // Porcentaje de sobretasa bomberil (Ley 1575/2012). Varía por municipio:
+  // típicamente 2%, 3% o 5% del total ICA. Llega desde el endpoint de config.
+  porcentajeSobretasaBomberil?: number
   economicActivities?: Array<{
-    codigoActividad: string
+    idActividad: number
+    codigoCIIU: string
     descripcion: string
+    // Proviene del backend cuando esté disponible; por ahora se simula en el
+    // DataOrchestrator con un valor determinista basado en idActividad.
     tarifaXMil: number
   }>
 }

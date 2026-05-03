@@ -4,13 +4,14 @@ import type { UseFormReturn } from 'react-hook-form'
 import type { MunicipalityConfig } from '@/types/config.types'
 import type { FormValues, HydratedData } from '@/types/form.types'
 import type { ResolvedStep } from '@/types/engine.types'
-import { resolveSchema } from '@/engines/form-engine'
+import { resolveSchema, resolveDefaults } from '@/engines/form-engine'
 import { evaluateRules } from '@/engines/rule-engine'
 import type { EvalContext } from '@/engines/rule-engine'
 import { validateStep as runValidateStep } from '@/engines/validation-engine'
 import { useFormSession } from '@/orchestration/form-state'
 import { StepRenderer } from './StepRenderer'
 import { StepNavigator } from './StepNavigator'
+import { FormEngineProvider } from '@/context/FormEngineContext'
 
 interface FormRendererProps {
   config: MunicipalityConfig
@@ -25,23 +26,34 @@ export function FormRenderer({
 }: FormRendererProps) {
   // Snapshot del schema base sin valores — primer render para inicializar la sesión.
   // Después de tener la sesión y los watched values, se reevalúa todo.
+  const mergedInitial = useMemo(
+    () => resolveDefaults(config, initialValues),
+    // Solo en mount: los defaults de config no cambian en runtime.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  )
+
   const initialSchema = useMemo(
-    () => resolveSchema(config, evaluateRules({
-      config, values: initialValues ?? {}, hydrated, context: ruleContext,
-    }), hydrated),
+    () => resolveSchema(
+      config,
+      evaluateRules({ config, values: mergedInitial, hydrated, context: ruleContext }),
+      hydrated,
+      mergedInitial,
+    ),
     // Solo en mount: evita resetear currentStepIndex en cada cambio de valores.
     // Las reglas reactivas se aplican vía <ReactiveSession> abajo.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   )
 
-  const session = useFormSession({ schema: initialSchema, initialValues })
+  const session = useFormSession({ schema: initialSchema, initialValues: mergedInitial })
 
   if (!session.currentStep) {
     return <p className="text-sm text-gray-500">No hay pasos visibles.</p>
   }
 
   return (
+    <FormEngineProvider hydrated={hydrated}>
     <FormProvider {...session.methods}>
       <ReactiveStepView
         config={config}
@@ -57,6 +69,7 @@ export function FormRenderer({
         onNext={session.goNext}
       />
     </FormProvider>
+    </FormEngineProvider>
   )
 }
 
@@ -89,8 +102,8 @@ function ReactiveStepView({
   )
 
   const schema = useMemo(
-    () => resolveSchema(config, rules, hydrated),
-    [config, rules, hydrated]
+    () => resolveSchema(config, rules, hydrated, watched),
+    [config, rules, hydrated, watched]
   )
 
   // Reemplaza el step de la sesión por la versión actualizada con reglas reactivas.
@@ -102,7 +115,7 @@ function ReactiveStepView({
     if (!stepConfig) { onNext(); return }
 
     const ctx: EvalContext = {
-      values: methods.getValues(),
+      values: { ...methods.getValues(), ...Object.fromEntries(rules.computed) },
       hydrated,
       context: ruleContext ?? {},
     }

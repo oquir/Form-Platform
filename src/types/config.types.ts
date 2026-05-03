@@ -55,9 +55,13 @@ export type FormulaOperation =
   | 'sumField'
   | 'calculateSanction'
 
+// Operando de fórmula: literal numérico, campo del form, o ruta dot-notation
+// en HydratedData (ej. { hydrated: 'municipality.porcentajeSobretasaBomberil' }).
+export type FormulaOperand = string | number | { hydrated: string }
+
 export interface FormulaNode {
   operation: FormulaOperation
-  operands?: Array<string | number>
+  operands?: Array<FormulaOperand>
   source?: string
   sourceField?: string
   divisor?: number
@@ -69,7 +73,7 @@ export interface FormulaNode {
 // ─── Field ────────────────────────────────────────────────────────────────────
 
 export type FieldType =
-  | 'text' | 'number' | 'select' | 'date'
+  | 'text' | 'number' | 'select' | 'radio' | 'date'
   | 'calculated' | 'hidden' | 'activityTable'
   | 'display'
 
@@ -83,6 +87,10 @@ export interface DisplayBinding {
 
 export interface CatalogRef {
   catalog: string
+  // Cascada declarativa: filtra las opciones del catálogo dejando solo aquellas
+  // cuyo `parentValue` coincide con el valor actual del field referenciado.
+  // Si el field referenciado no tiene valor aún, no se muestra ninguna opción.
+  filterBy?: { field: string }
 }
 
 export interface ApiRef {
@@ -125,8 +133,27 @@ export interface FieldConfig {
   columns?: ColumnConfig[]
   rowValidations?: RowValidationRule[]
   rowCalculations?: RowCalculationConfig[]
+  // Solo aplicable a campos tipo 'radio'. Cuando es false suprime el botón
+  // "Limpiar selección" (útil en radios con defaultValue obligatorio).
+  clearable?: boolean
   // Solo aplicable a fields tipo 'display'.
   bindings?: DisplayBinding[]
+  // Transforms a aplicar sobre el valor cuando el usuario abandona el campo
+  // (onBlur). Solo aplica a campos de input (number, text); los campos
+  // `calculated` usan `formula.postProcess`. Los transforms están registrados
+  // en transform-runner (ej. 'redondearMiles').
+  postProcess?: string[]
+  // Formato visual del valor numérico en reposo. 'thousands' aplica separador
+  // de miles (ej. 1.233.000). Sin esta propiedad el campo muestra el número crudo.
+  displayFormat?: 'thousands'
+  // Layout declarativo. Grid es de 12 columnas: 12 = fila completa, 6 = mitad,
+  // 4 = tercio, etc. Default 12 cuando no se especifica.
+  colSpan?: number
+  // Override condicional del colSpan. Primer `when` que matchee gana; si ninguno
+  // matchea, cae a `colSpan` (o 12). Permite que el ancho de un mismo campo
+  // cambie según el estado del formulario (ej: tipoDocumento pasa de 6 a 4
+  // cuando el contribuyente elige NIT y aparecen NIT + DV en la misma fila).
+  colSpanWhen?: Array<{ when: ConditionExpression; value: number }>
 }
 
 // ─── Step ─────────────────────────────────────────────────────────────────────

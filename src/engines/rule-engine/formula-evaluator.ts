@@ -1,4 +1,4 @@
-import type { FormulaNode } from '@/types/config.types'
+import type { FormulaNode, FormulaOperand } from '@/types/config.types'
 import type { EvalContext } from './operand-resolver'
 import { resolveValueRef } from './operand-resolver'
 import { applyTransforms } from './transform-runner'
@@ -12,14 +12,25 @@ function toNumber(v: unknown): number {
   return 0
 }
 
-function resolveOperandValue(operand: string | number, ctx: EvalContext): number {
+function resolveHydratedPath(path: string, ctx: EvalContext): unknown {
+  const parts = path.split('.')
+  let val: unknown = ctx.hydrated
+  for (const p of parts) {
+    if (val == null || typeof val !== 'object') return undefined
+    val = (val as Record<string, unknown>)[p]
+  }
+  return val
+}
+
+function resolveOperandValue(operand: FormulaOperand, ctx: EvalContext): number {
   if (typeof operand === 'number') return operand
-  // String: se interpreta como referencia a otro campo
+  if (typeof operand === 'object') return toNumber(resolveHydratedPath(operand.hydrated, ctx))
+  // String: referencia a otro campo del formulario
   return toNumber(ctx.values[operand])
 }
 
 function reduceArithmetic(
-  operands: Array<string | number> | undefined,
+  operands: Array<FormulaOperand> | undefined,
   ctx: EvalContext,
   fn: (acc: number, n: number) => number,
   initial: number

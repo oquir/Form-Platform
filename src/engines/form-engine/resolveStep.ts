@@ -1,6 +1,6 @@
 import type { StepConfig, FieldConfig } from '@/types/config.types'
 import type { ResolvedStep, ResolvedField, RuleEvalResult } from '@/types/engine.types'
-import type { HydratedData } from '@/types/form.types'
+import type { FormValues, HydratedData } from '@/types/form.types'
 import { resolveOptions } from './resolveOptions'
 import { resolveBindings } from './resolveBindings'
 
@@ -17,24 +17,49 @@ function resolveFieldVisibility(field: FieldConfig, rules: RuleEvalResult): bool
 function resolveField(
   field: FieldConfig,
   rules: RuleEvalResult,
-  hydrated: HydratedData
+  hydrated: HydratedData,
+  values: FormValues
 ): ResolvedField {
   return {
     id: field.id,
     label: field.label,
     type: field.type,
     isVisible: resolveFieldVisibility(field, rules),
-    isDisabled: false,
-    options: resolveOptions(field, hydrated),
+    isDisabled: rules.disabled.get(field.id) ?? false,
+    options: resolveOptions(field, hydrated, values),
     computedValue: field.type === 'calculated' ? rules.computed.get(field.id) : undefined,
     displayItems: field.type === 'display' ? resolveBindings(field.bindings, hydrated) : undefined,
+    // Default 12 (fila completa) si la config no especifica colSpan.
+    colSpan: rules.colSpan.get(field.id) ?? 12,
+    postProcess: field.postProcess,
+    maxLength: resolveMaxLength(field),
+    min: resolveMin(field),
+    displayFormat: field.displayFormat,
+    maxRows: field.maxRows,
+    rowCalculations: field.rowCalculations,
+    clearable: field.clearable,
   }
+}
+
+function resolveMaxLength(field: FieldConfig): number | undefined {
+  const rule = field.validations.find((v) => v.type === 'maxLength')
+  if (!rule?.value || !('literal' in rule.value)) return undefined
+  const n = Number(rule.value.literal)
+  return Number.isFinite(n) ? n : undefined
+}
+
+function resolveMin(field: FieldConfig): number | undefined {
+  const rule = field.validations.find((v) => v.type === 'min')
+  if (!rule?.value || !('literal' in rule.value)) return undefined
+  const n = Number(rule.value.literal)
+  return Number.isFinite(n) ? n : undefined
 }
 
 export function resolveStep(
   step: StepConfig,
   rules: RuleEvalResult,
-  hydrated: HydratedData
+  hydrated: HydratedData,
+  values: FormValues
 ): ResolvedStep {
   const fromRules = rules.stepVisibility.get(step.id)
   const isVisible = fromRules !== undefined ? fromRules : step.visibleWhen == null
@@ -44,6 +69,6 @@ export function resolveStep(
     label: step.label,
     order: step.order,
     isVisible,
-    fields: step.fields.map((f) => resolveField(f, rules, hydrated)),
+    fields: step.fields.map((f) => resolveField(f, rules, hydrated, values)),
   }
 }
