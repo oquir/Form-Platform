@@ -19,6 +19,10 @@ export class ApiError extends Error {
 export interface SelectOption {
   value: string
   label: string
+  // Identificador del valor padre cuando el catálogo participa en una cascada
+  // (ej. ciudades → departamento). Lo consume `resolveOptions` cuando el
+  // FieldConfig declara `source.filterBy`.
+  parentValue?: string
 }
 
 export type CatalogResponse = SelectOption[]
