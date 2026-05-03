@@ -32,7 +32,7 @@ export function evaluateCondition(expr: ConditionExpression, ctx: EvalContext): 
   }
 
   if (op === 'not') {
-    return !Boolean(resolveSide(expr.left, ctx))
+    return !resolveSide(expr.left, ctx)
   }
 
   const l = resolveSide(expr.left, ctx)
