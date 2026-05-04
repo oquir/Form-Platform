@@ -119,7 +119,7 @@ export function useDataOrchestrator(municipalityId: string): DataOrchestratorRes
         departmentName: municipioQ.data.departamento,
         siteColor: municipioQ.data.colorSitio,
         tieneRIT: municipioQ.data.tieneRIT,
-        porcentajeSobretasaBomberil: municipioQ.data.porcentajeSobretasaBomberil,
+        tarifaSobretasa: municipioQ.data.tarifaSobretasa,
         economicActivities,
       },
       contributor: null,

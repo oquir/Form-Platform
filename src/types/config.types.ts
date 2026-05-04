@@ -56,7 +56,7 @@ export type FormulaOperation =
   | 'calculateSanction'
 
 // Operando de fórmula: literal numérico, campo del form, o ruta dot-notation
-// en HydratedData (ej. { hydrated: 'municipality.porcentajeSobretasaBomberil' }).
+// en HydratedData (ej. { hydrated: 'municipality.tarifaSobretasa' }).
 export type FormulaOperand = string | number | { hydrated: string }
 
 export interface FormulaNode {

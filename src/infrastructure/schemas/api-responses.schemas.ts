@@ -40,14 +40,11 @@ export const municipioSchema = z.object({
   departamento: z.string(),
   colorSitio: z.string(),
   tieneRIT: z.boolean(),
-  porcentajeSobretasaBomberil: z.number().optional(),
+  tarifaSobretasa: z.number(),
 })
 
 export const clasificacionMunicipioSchema = z.object({
   idClasificacionMunicipio: z.number(),
-  // Nombre real del campo en backend (no `clasificacionMunicipio`).
-  // Puede llegar `null` para clasificaciones sin etiqueta; el orchestrator
-  // las filtra antes de pintar opciones.
   tipoClasificacion: z.string().nullable(),
 })
 

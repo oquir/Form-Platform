@@ -56,7 +56,7 @@ export interface MunicipalityDataCache {
   fechaMaximaConDescuento?: string
   // Porcentaje de sobretasa bomberil (Ley 1575/2012). Varía por municipio:
   // típicamente 2%, 3% o 5% del total ICA. Llega desde el endpoint de config.
-  porcentajeSobretasaBomberil?: number
+  tarifaSobretasa?: number
   economicActivities?: Array<{
     idActividad: number
     codigoCIIU: string

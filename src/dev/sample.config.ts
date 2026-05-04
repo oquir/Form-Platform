@@ -555,7 +555,7 @@ export const sampleConfig: MunicipalityConfig = {
 
         // ── Renglón 23 ─────────────────────────────────────────────────────────
         // Porcentaje proviene del endpoint de configuración del municipio
-        // (municipality.porcentajeSobretasaBomberil). Típicamente 2%, 3% o 5%.
+        // (municipality.tarifaSobretasa). Típicamente 2%, 3% o 5%.
         {
           id: 'sobretasaBomberil',
           label: '23. Sobretasa Bomberil (Ley 1575 de 2012)',
@@ -564,7 +564,7 @@ export const sampleConfig: MunicipalityConfig = {
           displayFormat: 'thousands',
           formula: {
             operation: 'multiply',
-            operands: ['totalImpuestoICA', { hydrated: 'municipality.porcentajeSobretasaBomberil' }],
+            operands: ['totalImpuestoICA', { hydrated: 'municipality.tarifaSobretasa' }],
             divisor: 100,
             postProcess: ['redondearMiles'],
           },

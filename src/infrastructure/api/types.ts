@@ -45,7 +45,7 @@ export interface Municipio {
   departamento: string;
   colorSitio: string;
   tieneRIT: boolean;
-  porcentajeSobretasaBomberil?: number;
+  tarifaSobretasa: number;
 }
 
 export interface ClasificacionMunicipio {
