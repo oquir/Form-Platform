@@ -94,7 +94,9 @@ export const sampleConfig: MunicipalityConfig = {
           },
           validations: [
             { type: 'required', message: 'Número de documento requerido' },
+            { type: 'pattern', value: { literal: '^\\d+$' }, message: 'Solo dígitos' },
             { type: 'minLength', value: { literal: 5 }, message: 'Mínimo 5 caracteres' },
+            { type: 'maxLength', value: { literal: 11 }, message: 'Máximo 11 dígitos' },
           ],
         },
 
@@ -110,6 +112,7 @@ export const sampleConfig: MunicipalityConfig = {
           validations: [
             { type: 'required', message: 'NIT requerido' },
             { type: 'pattern', value: { literal: '^\\d+$' }, message: 'Solo dígitos' },
+            { type: 'maxLength', value: { literal: 9 }, message: 'Máximo 9 dígitos' },
           ],
         },
         {
@@ -513,7 +516,7 @@ export const sampleConfig: MunicipalityConfig = {
           label: '21. Impuesto de Avisos y Tableros (15% Renglón 20) — ¿Tiene avisos y tableros?',
           type: 'radio',
           colSpan: 12,
-          defaultValue: 'no',
+          defaultValue: 'si',
           clearable: false,
           source: { catalog: 'yesNo' },
           validations: [],
@@ -524,16 +527,23 @@ export const sampleConfig: MunicipalityConfig = {
           type: 'calculated',
           colSpan: 12,
           displayFormat: 'thousands',
-          visibleWhen: {
-            operator: 'eq',
-            left: { field: 'tieneAvisosTableros' },
-            right: { literal: 'si' },
-          },
           formula: {
-            operation: 'multiply',
-            operands: ['totalImpuestoICA', 15],
-            divisor: 100,
-            postProcess: ['redondearMiles'],
+            operation: 'conditional',
+            condition: {
+              operator: 'eq',
+              left: { field: 'tieneAvisosTableros' },
+              right: { literal: 'si' },
+            },
+            then: {
+              operation: 'multiply',
+              operands: ['totalImpuestoICA', 15],
+              divisor: 100,
+              postProcess: ['redondearMiles'],
+            },
+            else: {
+              operation: 'add',
+              operands: [0],
+            },
           },
           validations: [],
         },
@@ -585,12 +595,457 @@ export const sampleConfig: MunicipalityConfig = {
             { type: 'maxLength', value: { literal: 20 }, message: 'Máximo 20 dígitos' },
           ],
         },
+
+        // ── Renglón 25 ─────────────────────────────────────────────────────────
+        {
+          id: 'totalImpuestoACargo',
+          label: '25. Total Impuesto a Cargo (Renglón 20 + 21 + 22 + 23 + 24)',
+          type: 'calculated',
+          colSpan: 12,
+          displayFormat: 'thousands',
+          formula: {
+            operation: 'add',
+            operands: [
+              'totalImpuestoICA',
+              'impuestoAvisosTableros',
+              'pagoUnidadesFinanciero',
+              'sobretasaBomberil',
+              'sobretasaSeguridad',
+            ],
+            postProcess: ['redondearMiles'],
+          },
+          validations: [],
+        },
+      ],
+    },
+    {
+      id: 'descuentosSanciones',
+      label: 'Descuentos, Anticipos y Sanciones',
+      order: 6,
+      visibleWhen: null,
+      fields: [
+        // ── Renglón 26 ─────────────────────────────────────────────────────────
+        {
+          id: 'exencionExoneracion',
+          label: '26. Menos: Valor de Exención o Exoneración Sobre el Impuesto y No Sobre los Ingresos',
+          type: 'number',
+          colSpan: 12,
+          defaultValue: 0,
+          displayFormat: 'thousands',
+          postProcess: ['redondearMiles'],
+          validations: [
+            { type: 'min', value: { literal: 0 }, message: 'No puede ser negativo' },
+            { type: 'maxLength', value: { literal: 20 }, message: 'Máximo 20 dígitos' },
+          ],
+        },
+
+        // ── Renglón 27 ─────────────────────────────────────────────────────────
+        {
+          id: 'retencionesAFavor',
+          label: '27. Menos: Retenciones que le practicaron a favor de este municipio o distrito en este periodo',
+          type: 'number',
+          colSpan: 12,
+          defaultValue: 0,
+          displayFormat: 'thousands',
+          postProcess: ['redondearMiles'],
+          validations: [
+            { type: 'min', value: { literal: 0 }, message: 'No puede ser negativo' },
+            { type: 'maxLength', value: { literal: 20 }, message: 'Máximo 20 dígitos' },
+          ],
+        },
+
+        // ── Renglón 28 ─────────────────────────────────────────────────────────
+        {
+          id: 'autorretencionesAFavor',
+          label: '28. Menos: Autorretenciones practicadas a favor de este municipio o distrito en este periodo',
+          type: 'number',
+          colSpan: 12,
+          defaultValue: 0,
+          displayFormat: 'thousands',
+          postProcess: ['redondearMiles'],
+          validations: [
+            { type: 'min', value: { literal: 0 }, message: 'No puede ser negativo' },
+            { type: 'maxLength', value: { literal: 20 }, message: 'Máximo 20 dígitos' },
+          ],
+        },
+
+        // ── Renglón 29 ─────────────────────────────────────────────────────────
+        {
+          id: 'anticipoAnioAnterior',
+          label: '29. Menos: Anticipo Liquidado en el Año Anterior',
+          type: 'number',
+          colSpan: 12,
+          defaultValue: 0,
+          displayFormat: 'thousands',
+          postProcess: ['redondearMiles'],
+          validations: [
+            { type: 'min', value: { literal: 0 }, message: 'No puede ser negativo' },
+            { type: 'maxLength', value: { literal: 20 }, message: 'Máximo 20 dígitos' },
+          ],
+        },
+
+        // ── Renglón 30 ─────────────────────────────────────────────────────────
+        {
+          id: 'anticipoAnioSiguiente',
+          label: '30. Anticipo del Año Siguiente (Si Existe, Liquide Porcentaje Según Acuerdo Municipal o Distrital)',
+          type: 'number',
+          colSpan: 12,
+          defaultValue: 0,
+          displayFormat: 'thousands',
+          postProcess: ['redondearMiles'],
+          validations: [
+            { type: 'min', value: { literal: 0 }, message: 'No puede ser negativo' },
+            { type: 'maxLength', value: { literal: 20 }, message: 'Máximo 20 dígitos' },
+          ],
+        },
+
+        // ── Renglón 31 ─────────────────────────────────────────────────────────
+        {
+          id: 'tipoSancion',
+          label: '31. Más: Sanciones — Tipo',
+          type: 'radio',
+          colSpan: 12,
+          clearable: false,
+          source: { catalog: 'tiposSancionICA' },
+          validations: [],
+        },
+        {
+          id: 'sanciones',
+          label: 'Valor de la Sanción',
+          type: 'number',
+          colSpan: 12,
+          defaultValue: 0,
+          displayFormat: 'thousands',
+          postProcess: ['redondearMiles'],
+          validations: [
+            { type: 'min', value: { literal: 0 }, message: 'No puede ser negativo' },
+            { type: 'maxLength', value: { literal: 20 }, message: 'Máximo 20 dígitos' },
+          ],
+        },
+
+        // ── Renglón 32 ─────────────────────────────────────────────────────────
+        {
+          id: 'saldoFavorPeriodoAnterior',
+          label: '32. Menos: Saldo a Favor del Periodo Anterior Sin Solicitud de Devolución o Compensación',
+          type: 'number',
+          colSpan: 12,
+          defaultValue: 0,
+          displayFormat: 'thousands',
+          postProcess: ['redondearMiles'],
+          validations: [
+            { type: 'min', value: { literal: 0 }, message: 'No puede ser negativo' },
+            { type: 'maxLength', value: { literal: 20 }, message: 'Máximo 20 dígitos' },
+          ],
+        },
+
+        // ── Renglón 33 ─────────────────────────────────────────────────────────
+        // (R25 + R30 + R31) - (R26 + R27 + R28 + R29 + R32); si < 0 → 0
+        {
+          id: 'totalSaldoCargo',
+          label: '33. Total Saldo a Cargo (Renglón 25 - 26 - 27 - 28 - 29 + 30 + 31 - 32)',
+          type: 'calculated',
+          colSpan: 12,
+          displayFormat: 'thousands',
+          formula: {
+            operation: 'net',
+            positives: ['totalImpuestoACargo', 'anticipoAnioSiguiente', 'sanciones'],
+            negatives: ['exencionExoneracion', 'retencionesAFavor', 'autorretencionesAFavor', 'anticipoAnioAnterior', 'saldoFavorPeriodoAnterior'],
+            postProcess: ['redondearMiles', 'clampMin0'],
+          },
+          validations: [],
+        },
+
+        // ── Renglón 34 ─────────────────────────────────────────────────────────
+        // Mismo balance que R33; si el resultado era negativo muestra el valor absoluto, si no → 0
+        {
+          id: 'totalSaldoFavor',
+          label: '34. Total Saldo a Favor (Renglón 25 - 26 - 27 - 28 - 29 + 30 + 31 - 32)',
+          type: 'calculated',
+          colSpan: 12,
+          displayFormat: 'thousands',
+          formula: {
+            operation: 'net',
+            positives: ['totalImpuestoACargo', 'anticipoAnioSiguiente', 'sanciones'],
+            negatives: ['exencionExoneracion', 'retencionesAFavor', 'autorretencionesAFavor', 'anticipoAnioAnterior', 'saldoFavorPeriodoAnterior'],
+            postProcess: ['redondearMiles', 'negateClampMin0'],
+          },
+          validations: [],
+        },
+      ],
+    },
+    {
+      id: 'pagos',
+      label: 'Valor a Pagar',
+      order: 7,
+      visibleWhen: null,
+      fields: [
+        // ── Renglón 35 ─────────────────────────────────────────────────────────
+        // Por ahora refleja directamente el saldo a cargo (R33).
+        {
+          id: 'valorAPagar',
+          label: '35. Valor a Pagar',
+          type: 'calculated',
+          colSpan: 12,
+          displayFormat: 'thousands',
+          formula: {
+            operation: 'add',
+            operands: ['totalSaldoCargo'],
+            postProcess: ['redondearMiles'],
+          },
+          validations: [],
+        },
+
+        // ── Renglón 36 ─────────────────────────────────────────────────────────
+        {
+          id: 'descuentoProntoPago',
+          label: '36. Descuento Por Pronto Pago (Si Existe, Liquídelo Según el Acuerdo Municipal o Distrital)',
+          type: 'number',
+          colSpan: 12,
+          defaultValue: 0,
+          displayFormat: 'thousands',
+          postProcess: ['redondearMiles'],
+          disabledWhen: { operator: 'eq', left: { literal: true }, right: { literal: true } },
+          validations: [
+            { type: 'min', value: { literal: 0 }, message: 'No puede ser negativo' },
+            { type: 'maxLength', value: { literal: 20 }, message: 'Máximo 20 dígitos' },
+          ],
+        },
+
+        // ── Renglón 37 ─────────────────────────────────────────────────────────
+        {
+          id: 'interesesMora',
+          label: '37. Intereses de Mora',
+          type: 'number',
+          colSpan: 12,
+          defaultValue: 0,
+          displayFormat: 'thousands',
+          postProcess: ['redondearMiles'],
+          validations: [
+            { type: 'min', value: { literal: 0 }, message: 'No puede ser negativo' },
+            { type: 'maxLength', value: { literal: 20 }, message: 'Máximo 20 dígitos' },
+          ],
+        },
+
+        // ── Renglón 38 ─────────────────────────────────────────────────────────
+        // R35 - R36 + R37
+        {
+          id: 'totalAPagar',
+          label: '38. Total a Pagar (Renglón 35 - 36 + 37)',
+          type: 'calculated',
+          colSpan: 12,
+          displayFormat: 'thousands',
+          formula: {
+            operation: 'net',
+            positives: ['valorAPagar', 'interesesMora'],
+            negatives: ['descuentoProntoPago'],
+            postProcess: ['redondearMiles', 'clampMin0'],
+          },
+          validations: [],
+        },
+      ],
+    },
+    {
+      id: 'pagoVoluntario',
+      label: 'Pago Voluntario',
+      order: 8,
+      visibleWhen: null,
+      fields: [
+        // ── Renglón 39 ─────────────────────────────────────────────────────────
+        {
+          id: 'pagoVoluntario',
+          label: '39. Liquide el Valor del Pago Voluntario (Según Instrucciones del Municipio/Distrito)',
+          type: 'number',
+          colSpan: 12,
+          defaultValue: 0,
+          displayFormat: 'thousands',
+          postProcess: ['redondearMiles'],
+          validations: [
+            { type: 'min', value: { literal: 0 }, message: 'No puede ser negativo' },
+            { type: 'maxLength', value: { literal: 20 }, message: 'Máximo 20 dígitos' },
+          ],
+        },
+
+        // ── Renglón 40 ─────────────────────────────────────────────────────────
+        // R38 + R39
+        {
+          id: 'totalAPagarConVoluntario',
+          label: '40. Total a Pagar Con Pago Voluntario (Renglón 38 + 39)',
+          type: 'calculated',
+          colSpan: 12,
+          displayFormat: 'thousands',
+          formula: {
+            operation: 'add',
+            operands: ['totalAPagar', 'pagoVoluntario'],
+            postProcess: ['redondearMiles'],
+          },
+          validations: [],
+        },
+
+        // ── Destino ─────────────────────────────────────────────────────────────
+        {
+          id: 'destinoAporteVoluntario',
+          label: 'Destino de Mi Aporte Voluntario',
+          type: 'text',
+          colSpan: 12,
+          validations: [],
+        },
+      ],
+    },
+    {
+      id: 'firmantes',
+      label: 'Información del Declarante y Firmante',
+      order: 9,
+      visibleWhen: null,
+      fields: [
+        // ── Información del declarante ──────────────────────────────────────────
+        {
+          id: 'declaranteTipoDocumento',
+          label: 'Tipo de documento',
+          type: 'select',
+          source: { catalog: 'documentTypes' },
+          colSpan: 6,
+          validations: [{ type: 'required', message: 'Requerido' }],
+        },
+        {
+          id: 'declaranteNumeroDocumento',
+          label: 'Número de documento',
+          type: 'text',
+          colSpan: 6,
+          validations: [{ type: 'required', message: 'Requerido' }],
+        },
+        {
+          id: 'declaranteNombreCompleto',
+          label: 'Nombre completo',
+          type: 'text',
+          colSpan: 12,
+          validations: [{ type: 'required', message: 'Requerido' }],
+        },
+
+        // ── Información del contador o revisor fiscal ───────────────────────────
+        {
+          id: 'tipoFirmante',
+          label: 'Información del contador o revisor fiscal',
+          type: 'radio',
+          colSpan: 12,
+          clearable: true,
+          source: { catalog: 'tiposFirmante' },
+          validations: [],
+        },
+        {
+          id: 'firmanteTipoDocumento',
+          label: 'Tipo de documento',
+          type: 'select',
+          source: { catalog: 'documentTypes' },
+          colSpan: 6,
+          disabledWhen: {
+            operator: 'notIn',
+            left: { field: 'tipoFirmante' },
+            right: { literal: ['contador', 'revisorFiscal'] },
+          },
+          validations: [],
+        },
+        {
+          id: 'firmanteNumeroDocumento',
+          label: 'Número de documento',
+          type: 'text',
+          colSpan: 6,
+          disabledWhen: {
+            operator: 'notIn',
+            left: { field: 'tipoFirmante' },
+            right: { literal: ['contador', 'revisorFiscal'] },
+          },
+          validations: [],
+        },
+        {
+          id: 'firmantePrimerNombre',
+          label: 'Primer nombre',
+          type: 'text',
+          colSpan: 6,
+          disabledWhen: {
+            operator: 'notIn',
+            left: { field: 'tipoFirmante' },
+            right: { literal: ['contador', 'revisorFiscal'] },
+          },
+          validations: [],
+        },
+        {
+          id: 'firmanteSegundoNombre',
+          label: 'Segundo nombre',
+          type: 'text',
+          colSpan: 6,
+          disabledWhen: {
+            operator: 'notIn',
+            left: { field: 'tipoFirmante' },
+            right: { literal: ['contador', 'revisorFiscal'] },
+          },
+          validations: [],
+        },
+        {
+          id: 'firmantePrimerApellido',
+          label: 'Primer apellido',
+          type: 'text',
+          colSpan: 6,
+          disabledWhen: {
+            operator: 'notIn',
+            left: { field: 'tipoFirmante' },
+            right: { literal: ['contador', 'revisorFiscal'] },
+          },
+          validations: [],
+        },
+        {
+          id: 'firmanteSegundoApellido',
+          label: 'Segundo apellido',
+          type: 'text',
+          colSpan: 6,
+          disabledWhen: {
+            operator: 'notIn',
+            left: { field: 'tipoFirmante' },
+            right: { literal: ['contador', 'revisorFiscal'] },
+          },
+          validations: [],
+        },
+        {
+          id: 'firmanteCelular',
+          label: 'Celular',
+          type: 'text',
+          colSpan: 6,
+          disabledWhen: {
+            operator: 'notIn',
+            left: { field: 'tipoFirmante' },
+            right: { literal: ['contador', 'revisorFiscal'] },
+          },
+          validations: [],
+        },
+        {
+          id: 'firmanteCorreoElectronico',
+          label: 'Correo electrónico',
+          type: 'text',
+          colSpan: 6,
+          disabledWhen: {
+            operator: 'notIn',
+            left: { field: 'tipoFirmante' },
+            right: { literal: ['contador', 'revisorFiscal'] },
+          },
+          validations: [],
+        },
+        {
+          id: 'firmanteTarjetaProfesional',
+          label: 'Número de tarjeta profesional',
+          type: 'text',
+          colSpan: 12,
+          disabledWhen: {
+            operator: 'notIn',
+            left: { field: 'tipoFirmante' },
+            right: { literal: ['contador', 'revisorFiscal'] },
+          },
+          validations: [],
+        },
       ],
     },
     {
       id: 'declaracion',
       label: 'Datos de la declaración',
-      order: 6,
+      order: 10,
       visibleWhen: null,
       fields: [
         {
@@ -610,7 +1065,7 @@ export const sampleConfig: MunicipalityConfig = {
     {
       id: 'totales',
       label: 'Totales',
-      order: 7,
+      order: 11,
       visibleWhen: null,
       fields: [
         {
@@ -652,6 +1107,16 @@ export const sampleHydratedData: HydratedData = {
       { value: 'juridica', label: 'Jurídica' },
     ],
     sanctionTypes: [],
+    tiposSancionICA: [
+      { value: 'extratemporaneidad', label: 'Extratemporaneidad' },
+      { value: 'correccion', label: 'Corrección' },
+      { value: 'inexactitud', label: 'Inexactitud' },
+      { value: 'otra', label: 'Otra' },
+    ],
+    tiposFirmante: [
+      { value: 'contador', label: 'Contador' },
+      { value: 'revisorFiscal', label: 'Revisor Fiscal' },
+    ],
     declarationTypes: [
       { value: 'inicial', label: 'Inicial' },
       { value: 'correccion', label: 'Corrección' },
