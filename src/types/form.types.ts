@@ -39,6 +39,8 @@ export interface GlobalCatalogs {
   // hidratación se hace en el Data Orchestrator.
   municipalityClassifications: SelectOption[]
   yesNo: SelectOption[]
+  tiposSancionICA: SelectOption[]
+  tiposFirmante: SelectOption[]
 }
 
 export interface MunicipalityDataCache {

@@ -99,6 +99,16 @@ export function useDataOrchestrator(municipalityId: string): DataOrchestratorRes
         { value: 'si', label: 'Sí' },
         { value: 'no', label: 'No' },
       ],
+      tiposSancionICA: [
+        { value: 'extratemporaneidad', label: 'Extratemporaneidad' },
+        { value: 'correccion', label: 'Corrección' },
+        { value: 'inexactitud', label: 'Inexactitud' },
+        { value: 'otra', label: 'Otra' },
+      ],
+      tiposFirmante: [
+        { value: 'contador', label: 'Contador' },
+        { value: 'revisorFiscal', label: 'Revisor Fiscal' },
+      ],
     }
 
     // Tarifa simulada determinista mientras el backend no la exponga.
