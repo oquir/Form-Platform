@@ -10,6 +10,16 @@ const transformRegistry: Record<string, TransformFn> = {
     if (typeof value !== 'number') return value
     return Math.round(value / 1000) * 1000
   },
+  // Saldo a cargo: si el resultado es negativo, el campo vale 0
+  clampMin0: (value) => {
+    if (typeof value !== 'number') return value
+    return Math.max(0, value)
+  },
+  // Saldo a favor: negativo del balance; si el balance era positivo, vale 0
+  negateClampMin0: (value) => {
+    if (typeof value !== 'number') return value
+    return Math.max(0, -value)
+  },
 }
 
 export function registerTransform(name: string, fn: TransformFn): void {

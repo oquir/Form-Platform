@@ -2,10 +2,8 @@
 // Lenguaje de condiciones unificado — usado por FormEngine, RuleEngine y ValidationEngine
 
 export type ConditionOperator =
-  | 'eq' | 'neq'
-  | 'gt' | 'gte'
-  | 'lt' | 'lte'
-  | 'in' | 'notIn'
+  | 'eq' | 'neq' | 'gt' | 'gte'
+  | 'lt' | 'lte' | 'in' | 'notIn'
   | 'and' | 'or' | 'not'
 
 export type ConditionOperand =
@@ -54,6 +52,8 @@ export type FormulaOperation =
   | 'multiply' | 'divide' | 'add' | 'subtract'
   | 'sumField'
   | 'calculateSanction'
+  | 'conditional'
+  | 'net'
 
 // Operando de fórmula: literal numérico, campo del form, o ruta dot-notation
 // en HydratedData (ej. { hydrated: 'municipality.tarifaSobretasa' }).
@@ -68,6 +68,13 @@ export interface FormulaNode {
   postProcess?: string[]
   base?: string
   params?: Record<string, ValueRef>
+  // Para operation: 'conditional'
+  condition?: ConditionExpression
+  then?: FormulaNode
+  else?: FormulaNode
+  // Para operation: 'net' — sum(positives) - sum(negatives)
+  positives?: Array<FormulaOperand>
+  negatives?: Array<FormulaOperand>
 }
 
 // ─── Field ────────────────────────────────────────────────────────────────────

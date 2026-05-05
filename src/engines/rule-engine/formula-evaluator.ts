@@ -2,6 +2,7 @@ import type { FormulaNode, FormulaOperand } from '@/types/config.types'
 import type { EvalContext } from './operand-resolver'
 import { resolveValueRef } from './operand-resolver'
 import { applyTransforms } from './transform-runner'
+import { evaluateCondition } from './condition-evaluator'
 
 function toNumber(v: unknown): number {
   if (typeof v === 'number') return v
@@ -102,6 +103,18 @@ export function evaluateFormula(node: FormulaNode, ctx: EvalContext): unknown {
     case 'calculateSanction':
       raw = evalSanction(node, ctx)
       break
+    case 'net': {
+      const pos = (node.positives ?? []).map((o) => resolveOperandValue(o, ctx)).reduce((a, b) => a + b, 0)
+      const neg = (node.negatives ?? []).map((o) => resolveOperandValue(o, ctx)).reduce((a, b) => a + b, 0)
+      raw = pos - neg
+      break
+    }
+    case 'conditional': {
+      const branch = node.condition && evaluateCondition(node.condition, ctx) ? node.then : node.else
+      if (!branch) { raw = 0; break }
+      const branchResult = evaluateFormula(branch, ctx)
+      return typeof branchResult === 'number' ? branchResult : 0
+    }
     default:
       raw = 0
   }
