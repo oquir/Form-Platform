@@ -9,5 +9,7 @@ export function emptyRuleResult(): RuleEvalResult {
     stepVisibility: new Map(),
     colSpan: new Map(),
     disabled: new Map(),
+    deadlineDate: null,
+    isLate: null,
   }
 }
