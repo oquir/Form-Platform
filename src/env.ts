@@ -2,6 +2,11 @@ interface Env {
   apiBaseUrl: string
   isDev: boolean
   isProd: boolean
+  // Valores fiscales — se usan para calcular mínimos de sanción.
+  // No son críticos para el arranque; si faltan el cálculo devuelve 0 como mínimo.
+  uvtValue: number
+  smmlvValue: number
+  tasaInteresAnual: number
 }
 
 function validateEnv(): Env {
@@ -17,6 +22,9 @@ function validateEnv(): Env {
     apiBaseUrl,
     isDev: import.meta.env.DEV,
     isProd: import.meta.env.PROD,
+    uvtValue:          Number(import.meta.env.VITE_UVT_VALUE          ?? 0),
+    smmlvValue:        Number(import.meta.env.VITE_SMMLV_VALUE        ?? 0),
+    tasaInteresAnual:  Number(import.meta.env.VITE_TASA_INTERES_ANUAL ?? 0),
   }
 }
 
