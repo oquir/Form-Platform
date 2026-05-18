@@ -62,6 +62,10 @@ export interface RuleEvalResult {
   stepVisibility: Map<string, boolean>
   colSpan: Map<string, number>
   disabled: Map<string, boolean>
+  // Resultado del cálculo de fecha límite de presentación.
+  // null = no hay calendario configurado o el documento aún no fue ingresado.
+  deadlineDate: Date | null
+  isLate: boolean | null
 }
 
 // ─── Validation engine ────────────────────────────────────────────────────────
