@@ -1,8 +1,9 @@
-import type { FormulaNode, FormulaOperand } from '@/types/config.types'
+import type { FormulaNode, FormulaOperand, UnidadTiempoMora, MinimoSancionRef } from '@/types/config.types'
 import type { EvalContext } from './operand-resolver'
 import { resolveValueRef } from './operand-resolver'
 import { applyTransforms } from './transform-runner'
 import { evaluateCondition } from './condition-evaluator'
+import { env } from '@/env'
 
 function toNumber(v: unknown): number {
   if (typeof v === 'number') return v
@@ -65,6 +66,88 @@ function evalSanction(node: FormulaNode, ctx: EvalContext): number {
   return baseValue * (effective / 100)
 }
 
+// ── Sanción por extemporaneidad ───────────────────────────────────────────────
+
+function calcularPeriodos(desde: Date, hasta: Date, unidad: UnidadTiempoMora): number {
+  const diffMs  = hasta.getTime() - desde.getTime()
+  const diffDias = diffMs / (1000 * 60 * 60 * 24)
+
+  if (unidad === 'dia') return Math.ceil(diffDias)
+
+  // Diferencia en meses exactos (puede ser decimal)
+  const mesesExactos =
+    (hasta.getFullYear() - desde.getFullYear()) * 12 +
+    (hasta.getMonth()   - desde.getMonth()) +
+    (hasta.getDate() - desde.getDate()) / 30
+
+  if (unidad === 'mes') return Math.floor(mesesExactos)
+  // 'fraccion' → mes completo o fracción cuenta como mes completo
+  return Math.ceil(mesesExactos)
+}
+
+function resolveMinimo(ref: MinimoSancionRef): number {
+  if (ref.tipo === 'uvt')   return ref.cantidad * env.uvtValue
+  if (ref.tipo === 'smmlv') return ref.cantidad * env.smmlvValue
+  return ref.valor
+}
+
+function evalSancionExtemporaneidad(node: FormulaNode, ctx: EvalContext): number {
+  const deadlineTs = toNumber(ctx.values['_deadlineTimestamp'])
+  if (!deadlineTs) return 0
+
+  const deadline = new Date(deadlineTs)
+  const now = new Date()
+  if (now <= deadline) return 0
+
+  const campoBase = (node.operands?.[0] as string | undefined) ?? 'totalImpuestoACargo'
+  const base = toNumber(ctx.values[campoBase])
+  if (base <= 0) return 0
+
+  const tasa       = node.tasa       ?? 0.05
+  const unidad     = node.unidadTiempo ?? 'fraccion'
+  const periodos   = calcularPeriodos(deadline, now, unidad)
+
+  let sancion = tasa * periodos * base
+
+  // Aplica mínimo
+  if (node.minimoSancion) {
+    const minVal = resolveMinimo(node.minimoSancion)
+    sancion = Math.max(sancion, minVal)
+  }
+
+  // Cap: la sanción no puede superar el 100 % del impuesto base
+  return Math.min(sancion, base)
+}
+
+// ── Intereses moratorios ──────────────────────────────────────────────────────
+
+function isLeapYear(year: number): boolean {
+  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0
+}
+
+function evalInteresesMoratorios(node: FormulaNode, ctx: EvalContext): number {
+  const deadlineTs = toNumber(ctx.values['_deadlineTimestamp'])
+  if (!deadlineTs) return 0
+
+  const deadline = new Date(deadlineTs)
+  const now = new Date()
+  if (now <= deadline) return 0
+
+  const campoBase = (node.operands?.[0] as string | undefined) ?? 'valorAPagar'
+  const valorBase = toNumber(ctx.values[campoBase])
+  if (valorBase <= 0) return 0
+
+  const diasMora = Math.ceil((now.getTime() - deadline.getTime()) / (1000 * 60 * 60 * 24))
+  if (diasMora <= 0) return 0
+
+  // La tasa diaria usa 366 días en año bisiesto, 365 en año normal.
+  // El año relevante es el del día de hoy (cuando se está pagando).
+  const diasAnio = isLeapYear(now.getFullYear()) ? 366 : 365
+  const tasaDiaria = env.tasaInteresAnual / diasAnio
+
+  return (valorBase * tasaDiaria * diasMora) / 100
+}
+
 // Evalúa un FormulaNode → number. Aplica postProcess al final (transforms
 // nombrados como redondeo). El input nunca contiene funciones; todo es data.
 export function evaluateFormula(node: FormulaNode, ctx: EvalContext): unknown {
@@ -115,6 +198,12 @@ export function evaluateFormula(node: FormulaNode, ctx: EvalContext): unknown {
       const branchResult = evaluateFormula(branch, ctx)
       return typeof branchResult === 'number' ? branchResult : 0
     }
+    case 'sancionExtemporaneidad':
+      raw = evalSancionExtemporaneidad(node, ctx)
+      break
+    case 'interesesMoratorios':
+      raw = evalInteresesMoratorios(node, ctx)
+      break
     default:
       raw = 0
   }
