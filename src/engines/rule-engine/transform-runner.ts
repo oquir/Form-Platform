@@ -20,6 +20,12 @@ const transformRegistry: Record<string, TransformFn> = {
     if (typeof value !== 'number') return value
     return Math.max(0, -value)
   },
+  // Redondeo hacia arriba a miles. 0 permanece en 0; cualquier valor > 0
+  // sube al siguiente múltiplo de 1000 (1→1000, 1001→2000, 10000→10000).
+  ceilMiles: (value) => {
+    if (typeof value !== 'number' || value <= 0) return 0
+    return Math.ceil(value / 1000) * 1000
+  },
 }
 
 export function registerTransform(name: string, fn: TransformFn): void {
