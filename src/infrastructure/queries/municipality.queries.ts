@@ -27,7 +27,12 @@ export function useConsultarMunicipioQuery(
       const result = await apiGateway.get<Municipio>(
         ENDPOINTS.GET_MUNICIPALITY(municipalityId as string)
       )
-      return municipioSchema.parse(result)
+      try {
+        return municipioSchema.parse(result)
+      } catch (e) {
+        console.error('[ConsultarMunicipio] Zod parse failed. Raw result:', result, 'Error:', e)
+        throw e
+      }
     },
     // Solo dispara con id presente; el FormPage gatea el render previo.
     enabled: !!municipalityId,
