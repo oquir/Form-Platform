@@ -112,9 +112,14 @@ function FormBody({
   }
   if (error || !data) {
     return (
-      <p className="text-sm text-red-600">
-        No se pudieron cargar los datos del municipio.
-      </p>
+      <div className="space-y-1">
+        <p className="text-sm text-red-600">No se pudieron cargar los datos del municipio.</p>
+        {error && (
+          <pre className="text-xs text-red-400 whitespace-pre-wrap break-all">
+            {error.message}
+          </pre>
+        )}
+      </div>
     )
   }
   return <SessionAwareFormRenderer session={session} hydrated={data} />
