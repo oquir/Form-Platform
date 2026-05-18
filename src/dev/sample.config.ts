@@ -720,6 +720,13 @@ export const sampleConfig: MunicipalityConfig = {
           validations: [
             { type: 'min', value: { literal: 0 }, message: 'No puede ser negativo' },
             { type: 'maxLength', value: { literal: 20 }, message: 'Máximo 20 dígitos' },
+            // La sanción no puede superar el 100 % del impuesto a cargo (Renglón 25)
+            {
+              type: 'crossField',
+              target: 'totalImpuestoACargo',
+              operator: 'lte',
+              message: 'La sanción no puede superar el 100 % del impuesto a cargo (Renglón 25)',
+            },
           ],
         },
 
@@ -812,6 +819,8 @@ export const sampleConfig: MunicipalityConfig = {
         },
 
         // ── Renglón 37 ─────────────────────────────────────────────────────────
+        // Yondó: manual. Siempre visible; cuando la declaración es extemporánea
+        // obliga a ingresar un valor > 0.
         {
           id: 'interesesMora',
           label: '37. Intereses de Mora',
@@ -821,7 +830,12 @@ export const sampleConfig: MunicipalityConfig = {
           displayFormat: 'thousands',
           postProcess: ['redondearMiles'],
           validations: [
-            { type: 'min', value: { literal: 0 }, message: 'No puede ser negativo' },
+            {
+              type: 'min',
+              value: { literal: 1 },
+              message: 'Debe ingresar el valor de los intereses de mora',
+              applyWhen: { operator: 'eq', left: { field: '_isVencida' }, right: { literal: true } },
+            },
             { type: 'maxLength', value: { literal: 20 }, message: 'Máximo 20 dígitos' },
           ],
         },
@@ -1094,6 +1108,27 @@ export const sampleConfig: MunicipalityConfig = {
       ],
     },
   ],
+  // Yondó — último día hábil de abril por año gravable (si el 30 cae en finde → viernes anterior)
+  calendarioVencimiento: {
+    // Si el contribuyente es persona jurídica usa 'nit'; para persona natural 'numeroDocumento'.
+    // Al declarar ambos, el engine toma el primero con valor no vacío.
+    documentoField: ['nit', 'numeroDocumento'],
+    // Yondó: el contribuyente ingresa la sanción manualmente; el engine solo aplica el cap del 100%.
+    sancion: { modo: 'manual' },
+    porAnio: {
+      2016: { type: 'fixed', date: '2016-04-29' }, // 30 = sábado
+      2017: { type: 'fixed', date: '2017-04-28' }, // 30 = domingo
+      2018: { type: 'fixed', date: '2018-04-30' },
+      2019: { type: 'fixed', date: '2019-04-30' },
+      2020: { type: 'fixed', date: '2020-04-30' },
+      2021: { type: 'fixed', date: '2021-04-30' },
+      2022: { type: 'fixed', date: '2022-04-29' }, // 30 = sábado
+      2023: { type: 'fixed', date: '2023-04-28' }, // 30 = domingo
+      2024: { type: 'fixed', date: '2024-04-30' },
+      2025: { type: 'fixed', date: '2025-04-30' },
+      2026: { type: 'fixed', date: '2026-04-30' },
+    },
+  },
 }
 
 export const sampleHydratedData: HydratedData = {
