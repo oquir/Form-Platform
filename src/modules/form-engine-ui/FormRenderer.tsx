@@ -135,6 +135,7 @@ function ReactiveStepView({
 
   return (
     <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-6">
+      <DeadlineBanner deadlineDate={rules.deadlineDate} isLate={rules.isLate} />
       <StepRenderer step={liveStep} />
       <StepNavigator
         currentIndex={currentStepIndex}
@@ -145,5 +146,30 @@ function ReactiveStepView({
         onNext={handleNext}
       />
     </form>
+  )
+}
+
+function DeadlineBanner({ deadlineDate, isLate }: { deadlineDate: Date | null; isLate: boolean | null }) {
+  if (!deadlineDate) return null
+
+  const formatted = deadlineDate.toLocaleDateString('es-CO', {
+    day: 'numeric', month: 'long', year: 'numeric',
+  })
+
+  if (isLate) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <span className="font-semibold">Declaración extemporánea.</span>{' '}
+        La fecha límite de presentación fue el <span className="font-semibold">{formatted}</span>.
+        Su declaración está sujeta a sanciones e intereses de mora.
+      </div>
+    )
+  }
+
+  return (
+    <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+      Fecha límite de presentación:{' '}
+      <span className="font-semibold">{formatted}</span>
+    </div>
   )
 }
